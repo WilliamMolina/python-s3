@@ -1,6 +1,7 @@
 import os
 from flask import Flask, flash, request, jsonify, abort
 from werkzeug.utils import secure_filename
+import boto3
 
 UPLOAD_FOLDER = '/projects/content-classifier'
 ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg', 'gif', '.mp4', '.avi'])
@@ -29,6 +30,13 @@ def upload_file():
             response = {'status': 'OK','message': 'File has been uploaded.'}
             return jsonify(response)
     else:
+        ## S3 connection
+        session = boto3.Session(
+            aws_access_key_id="ACCESS_KEY_ID",
+            aws_secret_access_key="SECRET_ACCESS_KEY",
+        )
+        s3 = session.resource('s3')
+        s3.create_bucket(Bucket="YOUR_BUCKET_NAME")
         response = {'status': 'OK','message': 'It works!.'}
         return jsonify(response)
         
