@@ -13,32 +13,23 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-@app.route('/upload', methods=['GET', 'POST'])
-def upload_file():
-    if request.method == 'POST':
-        # check if the post request has the file part
-        if 'file' not in request.files:
-            abort(400,'No file part.')
-        file = request.files['file']
-        # if user does not select file, browser also
-        # submit an empty part without filename
-        if file.filename == '':
-            abort(400, 'No file selected.')
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            response = {'status': 'OK','message': 'File has been uploaded.'}
-            return jsonify(response)
-    else:
-        ## S3 connection
-        session = boto3.Session(
-            aws_access_key_id="ACCESS_KEY_ID",
-            aws_secret_access_key="SECRET_ACCESS_KEY",
-        )
-        s3 = session.resource('s3')
-        s3.create_bucket(Bucket="YOUR_BUCKET_NAME")
-        response = {'status': 'OK','message': 'It works!.'}
-        return jsonify(response)
+@app.route('/')
+def index():
+    return '''<form method=POST enctype=multipart/form-data action="upload">
+    <input type=file name=myfile>
+    <input type=submit>
+    </form>'''
+
+@app.route('/upload', methods=['POST'])
+def upload():
+    ## S3 connection
+    session = boto3.Session(
+        aws_access_key_id="ACCESS_KEY_ID",
+        aws_secret_access_key="SECRET_ACCESS_KEY",
+    )
+    s3 = session.resource('s3')
+    s3.Bucket('YOUR_BUCKET_NAME').put_object(Key=secure_filename(request.files['myfile'].filename), Body=request.files['myfile'])
+    return '<h1>File saved to S3</h1>'
         
 if __name__ == '__main__':
    app.run(debug = True, port='5002', host='0.0.0.0')
